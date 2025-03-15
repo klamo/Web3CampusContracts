@@ -1,6 +1,35 @@
 [profile.default]
+via_ir = true
 src = "src"
 out = "out"
 libs = ["lib"]
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
+remappings = [
+    "@openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+    "web3campus/=src/web3campus/",
+    "web3company/=src/web3company/",
+    "web3common/=src/web3common/"
+]
+
+[profile.web3company]
+src = 'src'
+out = 'out/web3company'
+libs = ['lib']
+remappings = [
+    "@openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+    "web3campus/=src/web3campus/",
+    "web3company/=src/web3company/",
+    "web3common/=src/web3common/"
+]
+
+[profile.web3common]
+src = 'src'
+out = 'out/web3common'
+libs = ['lib']
+remappings = [
+    "@openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+    "web3campus/=src/web3campus/",
+    "web3company/=src/web3company/",
+    "web3common/=src/web3common/"
+]

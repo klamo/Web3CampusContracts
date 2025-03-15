@@ -1,0 +1,795 @@
+[
+  {
+    "type": "constructor",
+    "inputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "approveEditor",
+    "inputs": [
+      {
+        "name": "_lessonId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "_editor",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "_permissions",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "courseContract",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract CourseV1"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "createLesson",
+    "inputs": [
+      {
+        "name": "_courseId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "_title",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "_description",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "_lessonType",
+        "type": "uint8",
+        "internalType": "enum CourseLessonV1.LessonType"
+      },
+      {
+        "name": "_duration",
+        "type": "uint32",
+        "internalType": "uint32"
+      },
+      {
+        "name": "_complexity",
+        "type": "uint8",
+        "internalType": "uint8"
+      },
+      {
+        "name": "_resourcePack",
+        "type": "tuple",
+        "internalType": "struct CourseLessonV1.ResourcePack",
+        "components": [
+          {
+            "name": "mainURI",
+            "type": "string",
+            "internalType": "string"
+          },
+          {
+            "name": "backupURI",
+            "type": "string",
+            "internalType": "string"
+          },
+          {
+            "name": "ipfsCID",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "storageProof",
+            "type": "bytes",
+            "internalType": "bytes"
+          }
+        ]
+      },
+      {
+        "name": "_contentHash",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "getCourseLessons",
+    "inputs": [
+      {
+        "name": "_courseId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256[]",
+        "internalType": "uint256[]"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getEditorPermissions",
+    "inputs": [
+      {
+        "name": "_lessonId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "_editor",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getLessonInfo",
+    "inputs": [
+      {
+        "name": "_lessonId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "title",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "description",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "linkedCourseId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "creator",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "createdAt",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "updatedAt",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "lessonType",
+        "type": "uint8",
+        "internalType": "uint8"
+      },
+      {
+        "name": "status",
+        "type": "uint8",
+        "internalType": "uint8"
+      },
+      {
+        "name": "duration",
+        "type": "uint32",
+        "internalType": "uint32"
+      },
+      {
+        "name": "complexity",
+        "type": "uint8",
+        "internalType": "uint8"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getLessonResource",
+    "inputs": [
+      {
+        "name": "_lessonId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "mainURI",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "backupURI",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "ipfsCID",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "resourceNonce",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "initialize",
+    "inputs": [],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "lessonExists",
+    "inputs": [
+      {
+        "name": "_lessonId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "owner",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "proxiableUUID",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "renounceOwnership",
+    "inputs": [],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "revokeEditor",
+    "inputs": [
+      {
+        "name": "_lessonId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "_editor",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "setCourseContract",
+    "inputs": [
+      {
+        "name": "_courseAddress",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "totalLessons",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "transferOwnership",
+    "inputs": [
+      {
+        "name": "newOwner",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "updateExtensionSlot",
+    "inputs": [
+      {
+        "name": "_lessonId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "_extensionSlot",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "updateFeatureFlags",
+    "inputs": [
+      {
+        "name": "_lessonId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "_featureFlags",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "updateLessonInfo",
+    "inputs": [
+      {
+        "name": "_lessonId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "_title",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "_description",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "_contentHash",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "updateLessonResource",
+    "inputs": [
+      {
+        "name": "_lessonId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "_resourcePack",
+        "type": "tuple",
+        "internalType": "struct CourseLessonV1.ResourcePack",
+        "components": [
+          {
+            "name": "mainURI",
+            "type": "string",
+            "internalType": "string"
+          },
+          {
+            "name": "backupURI",
+            "type": "string",
+            "internalType": "string"
+          },
+          {
+            "name": "ipfsCID",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "storageProof",
+            "type": "bytes",
+            "internalType": "bytes"
+          }
+        ]
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "updateLessonStatus",
+    "inputs": [
+      {
+        "name": "_lessonId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "_status",
+        "type": "uint8",
+        "internalType": "enum CourseLessonV1.LessonStatus"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "upgradeTo",
+    "inputs": [
+      {
+        "name": "newImplementation",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "upgradeToAndCall",
+    "inputs": [
+      {
+        "name": "newImplementation",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "data",
+        "type": "bytes",
+        "internalType": "bytes"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "payable"
+  },
+  {
+    "type": "event",
+    "name": "AdminChanged",
+    "inputs": [
+      {
+        "name": "previousAdmin",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "newAdmin",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "BeaconUpgraded",
+    "inputs": [
+      {
+        "name": "beacon",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "CourseContractUpdated",
+    "inputs": [
+      {
+        "name": "newCourseContract",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "EditorApproved",
+    "inputs": [
+      {
+        "name": "lessonId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "editor",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "permissions",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "EditorRevoked",
+    "inputs": [
+      {
+        "name": "lessonId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "editor",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "ExtensionSlotUpdated",
+    "inputs": [
+      {
+        "name": "lessonId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "extensionSlot",
+        "type": "bytes32",
+        "indexed": false,
+        "internalType": "bytes32"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "FeatureFlagsUpdated",
+    "inputs": [
+      {
+        "name": "lessonId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "featureFlags",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "Initialized",
+    "inputs": [
+      {
+        "name": "version",
+        "type": "uint8",
+        "indexed": false,
+        "internalType": "uint8"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "LessonCreated",
+    "inputs": [
+      {
+        "name": "lessonId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "courseId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "creator",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "title",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "LessonInfoUpdated",
+    "inputs": [
+      {
+        "name": "lessonId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "updater",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "LessonResourceUpdated",
+    "inputs": [
+      {
+        "name": "lessonId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "updater",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "resourceNonce",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "LessonStatusUpdated",
+    "inputs": [
+      {
+        "name": "lessonId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "status",
+        "type": "uint8",
+        "indexed": false,
+        "internalType": "uint8"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "OwnershipTransferred",
+    "inputs": [
+      {
+        "name": "previousOwner",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "newOwner",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "Upgraded",
+    "inputs": [
+      {
+        "name": "implementation",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  }
+]
