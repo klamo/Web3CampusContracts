@@ -6,26 +6,22 @@
   },
   {
     "type": "function",
-    "name": "approveEditor",
+    "name": "chapterExists",
     "inputs": [
       {
-        "name": "_lessonId",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "_editor",
-        "type": "address",
-        "internalType": "address"
-      },
-      {
-        "name": "_permissions",
+        "name": "_chapterId",
         "type": "uint256",
         "internalType": "uint256"
       }
     ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "stateMutability": "view"
   },
   {
     "type": "function",
@@ -42,10 +38,169 @@
   },
   {
     "type": "function",
+    "name": "createChapter",
+    "inputs": [
+      {
+        "name": "_courseId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "_title",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "_description",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "_orderIndex",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "_isVirtual",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "createCourseLessonSystem",
+    "inputs": [
+      {
+        "name": "_courseId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "_chapters",
+        "type": "tuple[]",
+        "internalType": "struct CourseLessonV1.ChapterInput[]",
+        "components": [
+          {
+            "name": "title",
+            "type": "string",
+            "internalType": "string"
+          },
+          {
+            "name": "description",
+            "type": "string",
+            "internalType": "string"
+          },
+          {
+            "name": "orderIndex",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "isVirtual",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "lessons",
+            "type": "tuple[]",
+            "internalType": "struct CourseLessonV1.LessonInput[]",
+            "components": [
+              {
+                "name": "title",
+                "type": "string",
+                "internalType": "string"
+              },
+              {
+                "name": "description",
+                "type": "string",
+                "internalType": "string"
+              },
+              {
+                "name": "lessonType",
+                "type": "uint8",
+                "internalType": "enum CourseLessonV1.LessonType"
+              },
+              {
+                "name": "duration",
+                "type": "uint32",
+                "internalType": "uint32"
+              },
+              {
+                "name": "complexity",
+                "type": "uint8",
+                "internalType": "uint8"
+              },
+              {
+                "name": "resourcePack",
+                "type": "tuple",
+                "internalType": "struct CourseLessonV1.ResourcePack",
+                "components": [
+                  {
+                    "name": "mainURI",
+                    "type": "string",
+                    "internalType": "string"
+                  },
+                  {
+                    "name": "backupURI",
+                    "type": "string",
+                    "internalType": "string"
+                  },
+                  {
+                    "name": "ipfsCID",
+                    "type": "bytes32",
+                    "internalType": "bytes32"
+                  },
+                  {
+                    "name": "storageProof",
+                    "type": "bytes",
+                    "internalType": "bytes"
+                  }
+                ]
+              },
+              {
+                "name": "contentHash",
+                "type": "bytes32",
+                "internalType": "bytes32"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "outputs": [
+      {
+        "name": "chapterIds",
+        "type": "uint256[]",
+        "internalType": "uint256[]"
+      },
+      {
+        "name": "lessonIds",
+        "type": "uint256[]",
+        "internalType": "uint256[]"
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "createLesson",
     "inputs": [
       {
         "name": "_courseId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "_chapterId",
         "type": "uint256",
         "internalType": "uint256"
       },
@@ -118,7 +273,7 @@
   },
   {
     "type": "function",
-    "name": "getCourseLessons",
+    "name": "getCourseLessonDetails",
     "inputs": [
       {
         "name": "_courseId",
@@ -128,9 +283,175 @@
     ],
     "outputs": [
       {
-        "name": "",
-        "type": "uint256[]",
-        "internalType": "uint256[]"
+        "name": "chapterList",
+        "type": "tuple[]",
+        "internalType": "struct CourseLessonV1.Chapter[]",
+        "components": [
+          {
+            "name": "chapterId",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "courseId",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "title",
+            "type": "string",
+            "internalType": "string"
+          },
+          {
+            "name": "description",
+            "type": "string",
+            "internalType": "string"
+          },
+          {
+            "name": "orderIndex",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "createdAt",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "updatedAt",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "creator",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "isActive",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "isVirtual",
+            "type": "bool",
+            "internalType": "bool"
+          }
+        ]
+      },
+      {
+        "name": "chapterLessons",
+        "type": "tuple[][]",
+        "internalType": "struct CourseLessonV1.Lesson[][]",
+        "components": [
+          {
+            "name": "lessonId",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "contentHash",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "linkedCourseId",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "ltype",
+            "type": "uint8",
+            "internalType": "enum CourseLessonV1.LessonType"
+          },
+          {
+            "name": "duration",
+            "type": "uint32",
+            "internalType": "uint32"
+          },
+          {
+            "name": "complexity",
+            "type": "uint8",
+            "internalType": "uint8"
+          },
+          {
+            "name": "resourcePack",
+            "type": "tuple",
+            "internalType": "struct CourseLessonV1.ResourcePack",
+            "components": [
+              {
+                "name": "mainURI",
+                "type": "string",
+                "internalType": "string"
+              },
+              {
+                "name": "backupURI",
+                "type": "string",
+                "internalType": "string"
+              },
+              {
+                "name": "ipfsCID",
+                "type": "bytes32",
+                "internalType": "bytes32"
+              },
+              {
+                "name": "storageProof",
+                "type": "bytes",
+                "internalType": "bytes"
+              }
+            ]
+          },
+          {
+            "name": "resourceNonce",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "accessFlags",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "status",
+            "type": "uint8",
+            "internalType": "enum CourseLessonV1.LessonStatus"
+          },
+          {
+            "name": "extensionSlot",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "featureFlags",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "title",
+            "type": "string",
+            "internalType": "string"
+          },
+          {
+            "name": "description",
+            "type": "string",
+            "internalType": "string"
+          },
+          {
+            "name": "createdAt",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "updatedAt",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "creator",
+            "type": "address",
+            "internalType": "address"
+          }
+        ]
       }
     ],
     "stateMutability": "view"
@@ -153,104 +474,6 @@
     "outputs": [
       {
         "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "getLessonInfo",
-    "inputs": [
-      {
-        "name": "_lessonId",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "title",
-        "type": "string",
-        "internalType": "string"
-      },
-      {
-        "name": "description",
-        "type": "string",
-        "internalType": "string"
-      },
-      {
-        "name": "linkedCourseId",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "creator",
-        "type": "address",
-        "internalType": "address"
-      },
-      {
-        "name": "createdAt",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "updatedAt",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "lessonType",
-        "type": "uint8",
-        "internalType": "uint8"
-      },
-      {
-        "name": "status",
-        "type": "uint8",
-        "internalType": "uint8"
-      },
-      {
-        "name": "duration",
-        "type": "uint32",
-        "internalType": "uint32"
-      },
-      {
-        "name": "complexity",
-        "type": "uint8",
-        "internalType": "uint8"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "getLessonResource",
-    "inputs": [
-      {
-        "name": "_lessonId",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "mainURI",
-        "type": "string",
-        "internalType": "string"
-      },
-      {
-        "name": "backupURI",
-        "type": "string",
-        "internalType": "string"
-      },
-      {
-        "name": "ipfsCID",
-        "type": "bytes32",
-        "internalType": "bytes32"
-      },
-      {
-        "name": "resourceNonce",
         "type": "uint256",
         "internalType": "uint256"
       }
@@ -318,24 +541,6 @@
   },
   {
     "type": "function",
-    "name": "revokeEditor",
-    "inputs": [
-      {
-        "name": "_lessonId",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "_editor",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
     "name": "setCourseContract",
     "inputs": [
       {
@@ -368,128 +573,6 @@
         "name": "newOwner",
         "type": "address",
         "internalType": "address"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "updateExtensionSlot",
-    "inputs": [
-      {
-        "name": "_lessonId",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "_extensionSlot",
-        "type": "bytes32",
-        "internalType": "bytes32"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "updateFeatureFlags",
-    "inputs": [
-      {
-        "name": "_lessonId",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "_featureFlags",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "updateLessonInfo",
-    "inputs": [
-      {
-        "name": "_lessonId",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "_title",
-        "type": "string",
-        "internalType": "string"
-      },
-      {
-        "name": "_description",
-        "type": "string",
-        "internalType": "string"
-      },
-      {
-        "name": "_contentHash",
-        "type": "bytes32",
-        "internalType": "bytes32"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "updateLessonResource",
-    "inputs": [
-      {
-        "name": "_lessonId",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "_resourcePack",
-        "type": "tuple",
-        "internalType": "struct CourseLessonV1.ResourcePack",
-        "components": [
-          {
-            "name": "mainURI",
-            "type": "string",
-            "internalType": "string"
-          },
-          {
-            "name": "backupURI",
-            "type": "string",
-            "internalType": "string"
-          },
-          {
-            "name": "ipfsCID",
-            "type": "bytes32",
-            "internalType": "bytes32"
-          },
-          {
-            "name": "storageProof",
-            "type": "bytes",
-            "internalType": "bytes"
-          }
-        ]
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "updateLessonStatus",
-    "inputs": [
-      {
-        "name": "_lessonId",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "_status",
-        "type": "uint8",
-        "internalType": "enum CourseLessonV1.LessonStatus"
       }
     ],
     "outputs": [],
@@ -560,6 +643,75 @@
   },
   {
     "type": "event",
+    "name": "ChapterCreated",
+    "inputs": [
+      {
+        "name": "chapterId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "courseId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "creator",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "title",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "ChapterDeleted",
+    "inputs": [
+      {
+        "name": "chapterId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "deleter",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "ChapterUpdated",
+    "inputs": [
+      {
+        "name": "chapterId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "updater",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "CourseContractUpdated",
     "inputs": [
       {
@@ -567,88 +719,6 @@
         "type": "address",
         "indexed": true,
         "internalType": "address"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
-    "name": "EditorApproved",
-    "inputs": [
-      {
-        "name": "lessonId",
-        "type": "uint256",
-        "indexed": true,
-        "internalType": "uint256"
-      },
-      {
-        "name": "editor",
-        "type": "address",
-        "indexed": true,
-        "internalType": "address"
-      },
-      {
-        "name": "permissions",
-        "type": "uint256",
-        "indexed": false,
-        "internalType": "uint256"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
-    "name": "EditorRevoked",
-    "inputs": [
-      {
-        "name": "lessonId",
-        "type": "uint256",
-        "indexed": true,
-        "internalType": "uint256"
-      },
-      {
-        "name": "editor",
-        "type": "address",
-        "indexed": true,
-        "internalType": "address"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
-    "name": "ExtensionSlotUpdated",
-    "inputs": [
-      {
-        "name": "lessonId",
-        "type": "uint256",
-        "indexed": true,
-        "internalType": "uint256"
-      },
-      {
-        "name": "extensionSlot",
-        "type": "bytes32",
-        "indexed": false,
-        "internalType": "bytes32"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
-    "name": "FeatureFlagsUpdated",
-    "inputs": [
-      {
-        "name": "lessonId",
-        "type": "uint256",
-        "indexed": true,
-        "internalType": "uint256"
-      },
-      {
-        "name": "featureFlags",
-        "type": "uint256",
-        "indexed": false,
-        "internalType": "uint256"
       }
     ],
     "anonymous": false

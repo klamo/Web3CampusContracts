@@ -57,15 +57,15 @@ contract CourseLessonManagerV1 is Initializable, OwnableUpgradeable, UUPSUpgrade
     // 更新学习进度
     function updateLearningProgress(
         uint256 _lessonId,
+        uint256 _courseId,
         address _student,
         uint8 _progress
     ) public {
         require(lessonContract.lessonExists(_lessonId), "Lesson does not exist");
-        (,, uint256 courseId,,,,,,,) = lessonContract.getLessonInfo(_lessonId);
         
         // 只有课程教师或合约拥有者可以更新学习进度
         require(
-            courseContract.isTeacherOfCourse(courseId, msg.sender) || 
+            courseContract.isTeacherOfCourse(_courseId, msg.sender) || 
             msg.sender == owner(),
             "Only teacher or owner can update learning progress"
         );
@@ -82,15 +82,15 @@ contract CourseLessonManagerV1 is Initializable, OwnableUpgradeable, UUPSUpgrade
     // 更新考核分数
     function updateLearningScore(
         uint256 _lessonId,
+        uint256 _courseId,
         address _student,
         uint16 _score
     ) public {
         require(lessonContract.lessonExists(_lessonId), "Lesson does not exist");
-        (,, uint256 courseId,,,,,,,) = lessonContract.getLessonInfo(_lessonId);
         
         // 只有课程教师或合约拥有者可以更新考核分数
         require(
-            courseContract.isTeacherOfCourse(courseId, msg.sender) || 
+            courseContract.isTeacherOfCourse(_courseId, msg.sender) || 
             msg.sender == owner(),
             "Only teacher or owner can update learning score"
         );
@@ -107,16 +107,16 @@ contract CourseLessonManagerV1 is Initializable, OwnableUpgradeable, UUPSUpgrade
     // 批量更新学习记录
     function batchUpdateLearningRecords(
         uint256 _lessonId,
+        uint256 _courseId,
         address[] memory _students,
         uint8[] memory _progresses,
         uint16[] memory _scores
     ) public {
         require(lessonContract.lessonExists(_lessonId), "Lesson does not exist");
-        (,, uint256 courseId,,,,,,,) = lessonContract.getLessonInfo(_lessonId);
         
         // 只有课程教师或合约拥有者可以批量更新学习记录
         require(
-            courseContract.isTeacherOfCourse(courseId, msg.sender) || 
+            courseContract.isTeacherOfCourse(_courseId, msg.sender) || 
             msg.sender == owner(),
             "Only teacher or owner can batch update learning records"
         );

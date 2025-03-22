@@ -158,6 +158,11 @@
         "internalType": "struct CourseV1.CourseInfoView",
         "components": [
           {
+            "name": "courseId",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
             "name": "name",
             "type": "string",
             "internalType": "string"
@@ -174,6 +179,11 @@
           },
           {
             "name": "collegeId",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "schoolId",
             "type": "uint256",
             "internalType": "uint256"
           },
@@ -403,6 +413,11 @@
         "internalType": "struct CourseV1.CourseInfoView[]",
         "components": [
           {
+            "name": "courseId",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
             "name": "name",
             "type": "string",
             "internalType": "string"
@@ -419,6 +434,11 @@
           },
           {
             "name": "collegeId",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "schoolId",
             "type": "uint256",
             "internalType": "uint256"
           },

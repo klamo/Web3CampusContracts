@@ -7,7 +7,7 @@ import "@openzeppelin-contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeabl
 import "@openzeppelin-contracts-upgradeable/contracts/utils/CountersUpgradeable.sol";
 import "./SchoolUserV1.sol";
 import "./SchoolTeacher.sol";
-
+import "./SchoolCustomFieldV1.sol";  // 添加新合约的导入
 
 contract SchoolV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     using CountersUpgradeable for CountersUpgradeable.Counter;
@@ -26,12 +26,12 @@ contract SchoolV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     }
     
     // 权限位定义
-    uint32 constant CREATE_COLLEGE = 0x1;     // bit0: 创建学院
-    uint32 constant MANAGE_FUNDS = 0x2;       // bit1: 管理资金
-    uint32 constant UPDATE_INFO = 0x4;        // bit2: 修改信息
-    uint32 constant MANAGE_TEACHERS = 0x8;    // bit3: 管理教师
-    uint32 constant SUBMIT_PROPOSALS = 0x10;  // bit4: 提交提案
-    uint32 constant DAO_VOTE = 0x20;          // bit5: DAO投票
+    uint256 constant CREATE_COLLEGE = 0x1;     // bit0: 创建学院
+    uint256 constant MANAGE_FUNDS = 0x2;       // bit1: 管理资金
+    uint256 constant UPDATE_INFO = 0x4;        // bit2: 修改信息
+    uint256 constant MANAGE_TEACHERS = 0x8;    // bit3: 管理教师
+    uint256 constant SUBMIT_PROPOSALS = 0x10;  // bit4: 提交提案
+    uint256 constant DAO_VOTE = 0x20;          // bit5: DAO投票
     
     // 学校结构
     struct School {
@@ -98,7 +98,17 @@ contract SchoolV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
 
     // 添加事件
     event SchoolTeacherUpdated(address indexed newTeacherContract);
+
+    SchoolCustomFieldV1 public customField;
+
+    function setCustomField(address _customFieldAddress) public onlyOwner {
+        require(_customFieldAddress != address(0), "Invalid address");
+        customField = SchoolCustomFieldV1(_customFieldAddress);
+        emit CustomFieldUpdated(_customFieldAddress);
+    }
     
+    // 添加事件
+    event CustomFieldUpdated(address indexed newCustomFieldContract);
     // ==================== 学校管理 ====================
 
     // 创建学校
@@ -134,6 +144,12 @@ contract SchoolV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         schoolNameToId[_name] = newSchoolId;
         userCreatedSchools[msg.sender].push(newSchoolId);
         totalSchools++;
+        
+        // 自动将创建者添加为学校的老师，并赋予所有权限
+        if (address(schoolTeacher) != address(0)) {
+            // 使用 type(uint256).max 表示所有权限位都设置为1
+            schoolTeacher.addTeacher(newSchoolId, msg.sender, type(uint256).max);
+        }
         
         emit SchoolCreated(newSchoolId, msg.sender, _name);
         return newSchoolId;
@@ -216,59 +232,6 @@ contract SchoolV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         emit SchoolStatusUpdated(_schoolId, uint8(_status), _reason);
     }
 
-    // ==================== 自定义字段管理 ====================
-    
-    // 添加或更新学校自定义字段
-    function setSchoolCustomField(uint256 _schoolId, string memory _key, string memory _value) public {
-        require(schoolExists(_schoolId), "School does not exist");
-        require(_hasPermission(_schoolId, msg.sender, UPDATE_INFO), "No permission to update info");
-        
-        School storage school = schools[_schoolId];
-        require(school.customFieldKeys.length < 100, "Too many custom fields");
-        
-        if (bytes(school.customFields[_key]).length == 0) {
-            school.customFieldKeys.push(_key);
-        }
-        school.customFields[_key] = _value;
-        school.updatedAt = block.timestamp;
-        
-        emit SchoolCustomFieldUpdated(_schoolId, _key, _value);
-    }
-    
-    // 获取学校自定义字段值
-    function getSchoolCustomField(uint256 _schoolId, string memory _key) public view returns (string memory) {
-        require(schoolExists(_schoolId), "School does not exist");
-        return schools[_schoolId].customFields[_key];
-    }
-    
-    // 获取学校所有自定义字段键
-    function getSchoolCustomFieldKeys(uint256 _schoolId) public view returns (string[] memory) {
-        require(schoolExists(_schoolId), "School does not exist");
-        return schools[_schoolId].customFieldKeys;
-    }
-    
-    // 删除学校自定义字段
-    function removeSchoolCustomField(uint256 _schoolId, string memory _key) public {
-        require(schoolExists(_schoolId), "School does not exist");
-        require(_hasPermission(_schoolId, msg.sender, UPDATE_INFO), "No permission to update info");
-        
-        School storage school = schools[_schoolId];
-        require(bytes(school.customFields[_key]).length > 0, "Field not found");
-        
-        // 删除当前记录
-        delete school.customFields[_key];
-        for (uint i = 0; i < school.customFieldKeys.length; i++) {
-            if (keccak256(bytes(school.customFieldKeys[i])) == keccak256(bytes(_key))) {
-                school.customFieldKeys[i] = school.customFieldKeys[school.customFieldKeys.length - 1];
-                school.customFieldKeys.pop();
-                break;
-            }
-        }
-        school.updatedAt = block.timestamp;
-        
-        emit SchoolCustomFieldRemoved(_schoolId, _key);
-    }
-
     // ==================== 声誉管理 ====================
     
     // 更新学校声誉值
@@ -331,7 +294,7 @@ contract SchoolV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     }
     
     // 检查用户是否有特定权限
-    function hasPermission(uint256 _schoolId, address _user, uint32 _permission) public view returns (bool) {
+    function hasPermission(uint256 _schoolId, address _user, uint256 _permission) public view returns (bool) {
         require(schoolExists(_schoolId), "School does not exist");
         return _hasPermission(_schoolId, _user, _permission);
     }
@@ -399,8 +362,47 @@ contract SchoolV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         address _user,
         uint256 _page,
         uint256 _size,
-        uint8 isNotDelete    // 0-未删除学校，1-已删除学校，2-所有学校
+        uint8 isNotDelete,    // 0-未删除学校，1-已删除学校，2-所有学校
+        uint256[] memory _schoolIds // 新增参数：指定学校ID数组
     ) public view returns (SchoolInfo[] memory schoolList) {
+        // 如果指定了学校ID数组且不为空，则直接查询这些学校
+        if (_schoolIds.length > 0) {
+            // 权限检查：只有合约拥有者可以查询已删除和所有学校
+            if (isNotDelete > 0 && owner() != msg.sender) {
+                isNotDelete = 0; // 如果不是合约拥有者，强制查询未删除的学校
+            }
+            
+            // 先创建最大可能大小的数组
+            schoolList = new SchoolInfo[](_schoolIds.length);
+            uint256 validCount = 0;
+            
+            // 遍历指定的学校ID
+            for (uint256 i = 0; i < _schoolIds.length; i++) {
+                // 检查学校是否存在
+                if (!schoolExists(_schoolIds[i])) continue;
+                
+                SchoolInfo memory info = _toSchoolInfo(schools[_schoolIds[i]]);
+                
+                // 根据删除状态筛选
+                if ((isNotDelete == 0 && info.status != SchoolStatus.Closed) ||
+                    (isNotDelete == 1 && info.status == SchoolStatus.Closed) ||
+                    isNotDelete == 2) {
+                    schoolList[validCount] = info;
+                    validCount++;
+                }
+            }
+            
+            // 如果筛选后数量减少，调整数组大小
+            if (validCount < schoolList.length) {
+                assembly {
+                    mstore(schoolList, validCount)
+                }
+            }
+            
+            return schoolList;
+        }
+        
+        // 以下是原有的分页查询逻辑
         require(_size > 0, "Page size must be greater than 0");
         
         // 权限检查：只有合约拥有者可以查询已删除和所有学校
@@ -482,14 +484,14 @@ contract SchoolV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     }
 
     // 检查用户是否有特定权限
-    function _hasPermission(uint256 _schoolId, address _user, uint32 _permission) internal view returns (bool) {
+    function _hasPermission(uint256 _schoolId, address _user, uint256 _permission) internal view returns (bool) {
         // 创建者拥有所有权限
         if (_user == schools[_schoolId].creator) {
             return true;
         }
         
         // 从 SchoolTeacher 合约获取权限
-        uint32 userPerms = schoolTeacher.getTeacherPermissions(_schoolId, _user);
+        uint256 userPerms = schoolTeacher.getTeacherPermissions(_schoolId, _user);
         return (userPerms & _permission) == _permission;
     }
     

@@ -53,6 +53,19 @@
   },
   {
     "type": "function",
+    "name": "customField",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract SchoolCustomFieldV1"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "defaultMaxColleges",
     "inputs": [],
     "outputs": [
@@ -98,49 +111,6 @@
         "name": "",
         "type": "address[]",
         "internalType": "address[]"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "getSchoolCustomField",
-    "inputs": [
-      {
-        "name": "_schoolId",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "_key",
-        "type": "string",
-        "internalType": "string"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "",
-        "type": "string",
-        "internalType": "string"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "getSchoolCustomFieldKeys",
-    "inputs": [
-      {
-        "name": "_schoolId",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "",
-        "type": "string[]",
-        "internalType": "string[]"
       }
     ],
     "stateMutability": "view"
@@ -241,6 +211,11 @@
         "name": "isNotDelete",
         "type": "uint8",
         "internalType": "uint8"
+      },
+      {
+        "name": "_schoolIds",
+        "type": "uint256[]",
+        "internalType": "uint256[]"
       }
     ],
     "outputs": [
@@ -344,8 +319,8 @@
       },
       {
         "name": "_permission",
-        "type": "uint32",
-        "internalType": "uint32"
+        "type": "uint256",
+        "internalType": "uint256"
       }
     ],
     "outputs": [
@@ -410,24 +385,6 @@
   },
   {
     "type": "function",
-    "name": "removeSchoolCustomField",
-    "inputs": [
-      {
-        "name": "_schoolId",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "_key",
-        "type": "string",
-        "internalType": "string"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
     "name": "renounceOwnership",
     "inputs": [],
     "outputs": [],
@@ -480,6 +437,19 @@
   },
   {
     "type": "function",
+    "name": "setCustomField",
+    "inputs": [
+      {
+        "name": "_customFieldAddress",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "setMaxColleges",
     "inputs": [
       {
@@ -491,29 +461,6 @@
         "name": "_maxColleges",
         "type": "uint256",
         "internalType": "uint256"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "setSchoolCustomField",
-    "inputs": [
-      {
-        "name": "_schoolId",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "_key",
-        "type": "string",
-        "internalType": "string"
-      },
-      {
-        "name": "_value",
-        "type": "string",
-        "internalType": "string"
       }
     ],
     "outputs": [],
@@ -696,6 +643,19 @@
     "inputs": [
       {
         "name": "beacon",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "CustomFieldUpdated",
+    "inputs": [
+      {
+        "name": "newCustomFieldContract",
         "type": "address",
         "indexed": true,
         "internalType": "address"

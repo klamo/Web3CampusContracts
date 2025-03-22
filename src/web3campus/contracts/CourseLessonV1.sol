@@ -32,6 +32,20 @@ contract CourseLessonV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         Suspended   // 已暂停
     }
     
+    // 章节结构体
+    struct Chapter {
+        uint256 chapterId;          // 章节ID
+        uint256 courseId;           // 所属课程ID
+        string title;               // 章节标题
+        string description;         // 章节描述
+        uint256 orderIndex;         // 排序索引
+        uint256 createdAt;          // 创建时间
+        uint256 updatedAt;          // 更新时间
+        address creator;            // 创建者
+        bool isActive;              // 是否激活
+        bool isVirtual;             // 是否为虚拟章节
+    }
+    
     // 资源包结构
     struct ResourcePack {
         string mainURI;         // 主资源地址
@@ -40,14 +54,6 @@ contract CourseLessonV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         bytes storageProof;     // 去中心化存储证明
     }
     
-    // 完成记录结构
-    struct CompletionRecord {
-        uint8 progress;         // 完成百分比
-        uint64 lastAccess;      // 最后访问时间
-        uint16 score;           // 考核分数
-        address studentAddress; // 学员地址
-    }
-        
     // 课时结构
     struct Lesson {
         // 元数据核心字段
@@ -85,8 +91,20 @@ contract CourseLessonV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     // 课时ID => 课时信息
     mapping(uint256 => Lesson) private lessons;
     
-    // 课程ID => 课时ID数组
-    mapping(uint256 => uint256[]) private courseLessonIds;
+    // 章节ID计数器
+    CountersUpgradeable.Counter private _chapterIdCounter;
+    
+    // 章节ID => 章节信息
+    mapping(uint256 => Chapter) private chapters;
+    
+    // 课程ID => 章节ID数组
+    mapping(uint256 => uint256[]) private courseChapterIds;
+    
+    // 章节ID => 课时ID数组
+    mapping(uint256 => uint256[]) private chapterLessonIds;
+    
+    // 课时ID => 章节ID (如果课时属于章节)
+    mapping(uint256 => uint256) private lessonChapterIds;
     
     // 授权编辑者映射：课时ID => 地址 => 权限标志
     mapping(uint256 => mapping(address => uint256)) private approvedEditors;
@@ -114,11 +132,10 @@ contract CourseLessonV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     // 在事件部分添加新事件
     event CourseContractUpdated(address indexed newCourseContract);
     
-    // ==================== 课时管理 ====================
-    
     // 创建课时
     function createLesson(
         uint256 _courseId,
+        uint256 _chapterId,
         string memory _title,
         string memory _description,
         LessonType _lessonType,
@@ -127,11 +144,14 @@ contract CourseLessonV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         ResourcePack memory _resourcePack,
         bytes32 _contentHash
     ) public returns (uint256) {
-        require(courseContract.courseExists(_courseId), "Course does not exist");
-        require(courseContract.isTeacherOfCourse(_courseId, msg.sender), "Only teacher can create lesson");
-        require(!courseContract.isCourseLocked(_courseId), "Course is locked");
-        require(bytes(_title).length > 0, "Lesson title cannot be empty");
-        require(_complexity > 0 && _complexity <= 100, "Complexity must be between 1 and 100");
+        require(bytes(_title).length > 0, "Lesson title empty");
+        require(_complexity > 0 && _complexity <= 100, "Complexity between 1-100");
+        require(_chapterId != 0, "Chapter zero");
+        
+        // 添加更详细的错误信息
+        // 将长错误消息替换为更简短的版本
+        require(chapterExists(_chapterId), "Chapter not found");
+        require(chapters[_chapterId].courseId == _courseId, "Chapter not in course");
         
         _lessonIdCounter.increment();
         uint256 newLessonId = _lessonIdCounter.current();
@@ -152,7 +172,6 @@ contract CourseLessonV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         
         newLesson.status = LessonStatus.Draft;
         
-        
         newLesson.extensionSlot = bytes32(0);
         newLesson.featureFlags = 0;
         
@@ -163,7 +182,8 @@ contract CourseLessonV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         newLesson.creator = msg.sender;
         
         // 更新映射关系
-        courseLessonIds[_courseId].push(newLessonId);
+        chapterLessonIds[_chapterId].push(newLessonId);
+        lessonChapterIds[newLessonId] = _chapterId;
         
         // 默认将创建者添加为编辑者，拥有所有权限
         approvedEditors[newLessonId][msg.sender] = type(uint256).max;
@@ -174,212 +194,362 @@ contract CourseLessonV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         return newLessonId;
     }
     
-    // 更新课时基本信息
-    function updateLessonInfo(
-        uint256 _lessonId,
+    // 创建章节
+    function createChapter(
+        uint256 _courseId,
         string memory _title,
         string memory _description,
-        bytes32 _contentHash
-    ) public {
-        require(lessonExists(_lessonId), "Lesson does not exist");
-        Lesson storage lesson = lessons[_lessonId];
+        uint256 _orderIndex,
+        bool _isVirtual
+    ) public returns (uint256) {
+        require(bytes(_title).length > 0, "Chapter title empty");
         
-        // 检查权限
-        require(
-            hasEditPermission(_lessonId, msg.sender, 0), // 检查元数据修改权限
-            "No permission to update lesson info"
-        );
-        require(!courseContract.isCourseLocked(lesson.linkedCourseId), "Course is locked");
+        _chapterIdCounter.increment();
+        uint256 newChapterId = _chapterIdCounter.current();
         
-        lesson.title = _title;
-        lesson.description = _description;
-        lesson.contentHash = _contentHash;
-        lesson.updatedAt = block.timestamp;
+        Chapter storage newChapter = chapters[newChapterId];
+        newChapter.chapterId = newChapterId;
+        newChapter.courseId = _courseId;
+        newChapter.title = _title;
+        newChapter.description = _description;
+        newChapter.orderIndex = _orderIndex;
+        newChapter.isVirtual = _isVirtual;
+        newChapter.createdAt = block.timestamp;
+        newChapter.updatedAt = block.timestamp;
+        newChapter.creator = msg.sender;
+        newChapter.isActive = true;
         
-        emit LessonInfoUpdated(_lessonId, msg.sender);
+        // 更新映射关系
+        courseChapterIds[_courseId].push(newChapterId);
+        
+        emit ChapterCreated(newChapterId, _courseId, msg.sender, _title);
+        return newChapterId;
     }
     
-    // 更新课时资源
-    function updateLessonResource(
-        uint256 _lessonId,
-        ResourcePack memory _resourcePack
-    ) public {
-        require(lessonExists(_lessonId), "Lesson does not exist");
-        Lesson storage lesson = lessons[_lessonId];
-        
-        // 检查权限
-        require(
-            hasEditPermission(_lessonId, msg.sender, 1), // 检查资源更新权限
-            "No permission to update lesson resource"
-        );
-        require(!courseContract.isCourseLocked(lesson.linkedCourseId), "Course is locked");
-        
-        lesson.resourcePack = _resourcePack;
-        lesson.resourceNonce += 1;
-        lesson.updatedAt = block.timestamp;
-        
-        emit LessonResourceUpdated(_lessonId, msg.sender, lesson.resourceNonce);
+    // 批量创建课程章节和课时体系
+    struct ChapterInput {
+        string title;
+        string description;
+        uint256 orderIndex;
+        bool isVirtual;             // 是否为虚拟章节
+        LessonInput[] lessons;
     }
     
-    // 更新课时状态
-    function updateLessonStatus(uint256 _lessonId, LessonStatus _status) public {
-        require(lessonExists(_lessonId), "Lesson does not exist");
-        Lesson storage lesson = lessons[_lessonId];
-        
-        // 检查权限
-        require(
-            hasEditPermission(_lessonId, msg.sender, 2), // 检查状态变更权限
-            "No permission to update lesson status"
-        );
-        require(!courseContract.isCourseLocked(lesson.linkedCourseId), "Course is locked");
-        
-        lesson.status = _status;
-        lesson.updatedAt = block.timestamp;
-        
-        emit LessonStatusUpdated(_lessonId, uint8(_status));
+    struct LessonInput {
+        string title;
+        string description;
+        LessonType lessonType;
+        uint32 duration;
+        uint8 complexity;
+        ResourcePack resourcePack;
+        bytes32 contentHash;
     }
     
-    // ==================== 权限管理 ====================
-    
-    // 授权编辑者
-    function approveEditor(
-        uint256 _lessonId,
-        address _editor,
-        uint256 _permissions
-    ) public {
-        require(lessonExists(_lessonId), "Lesson does not exist");
-        Lesson storage lesson = lessons[_lessonId];
-        
-        // 只有课程教师或课时创建者可以授权编辑者
-        require(
-            courseContract.isTeacherOfCourse(lesson.linkedCourseId, msg.sender) || 
-            msg.sender == lesson.creator,
-            "Only teacher or creator can approve editors"
-        );
-        require(!courseContract.isCourseLocked(lesson.linkedCourseId), "Course is locked");
-        
-        approvedEditors[_lessonId][_editor] = _permissions;
-        
-        emit EditorApproved(_lessonId, _editor, _permissions);
+    // 修改批量创建/更新课程章节和课时体系方法
+    function createCourseLessonSystem(
+        uint256 _courseId,
+        ChapterInput[] memory _chapters
+    ) public returns (uint256[] memory chapterIds, uint256[] memory lessonIds) {
+        require(courseContract.courseExists(_courseId), "Course not exist");
+        require(courseContract.isTeacherOfCourse(_courseId, msg.sender), "Only teacher create");
+        require(!courseContract.isCourseLocked(_courseId), "Course locked");
+        return processChapterStructure(_courseId, _chapters);
     }
     
-    // 撤销编辑者权限
-    function revokeEditor(uint256 _lessonId, address _editor) public {
-        require(lessonExists(_lessonId), "Lesson does not exist");
-        Lesson storage lesson = lessons[_lessonId];
+    // 处理章节结构的课程
+    function processChapterStructure(
+        uint256 _courseId, 
+        ChapterInput[] memory _chapters
+    ) private returns (uint256[] memory chapterIds, uint256[] memory lessonIds) {
+        // 获取现有章节
+        uint256[] memory existingChapterIds = courseChapterIds[_courseId];
+        bool[] memory processedChapters = new bool[](existingChapterIds.length);
         
-        // 只有课程教师或课时创建者可以撤销编辑者
-        require(
-            courseContract.isTeacherOfCourse(lesson.linkedCourseId, msg.sender) || 
-            msg.sender == lesson.creator,
-            "Only teacher or creator can revoke editors"
-        );
-        require(!courseContract.isCourseLocked(lesson.linkedCourseId), "Course is locked");
+        // 计算总课时数量
+        uint256 totalLessonsCount = 0;
+        for (uint256 i = 0; i < _chapters.length; i++) {
+            totalLessonsCount += _chapters[i].lessons.length;
+        }
         
-        delete approvedEditors[_lessonId][_editor];
+        uint256[] memory newChapterIds = new uint256[](_chapters.length);
+        uint256[] memory newLessonIds = new uint256[](totalLessonsCount);
+        uint256 lessonIndex = 0;
         
-        emit EditorRevoked(_lessonId, _editor);
+        // 处理章节和章节下的课时
+        for (uint256 i = 0; i < _chapters.length; i++) {
+            uint256 chapterId = 0;
+            bool chapterFound = false;
+            
+            // 尝试查找匹配的现有章节
+            for (uint256 j = 0; j < existingChapterIds.length; j++) {
+                if (processedChapters[j]) continue;
+                
+                Chapter storage existingChapter = chapters[existingChapterIds[j]];
+                // 只匹配活跃的章节
+                if (existingChapter.isActive && keccak256(bytes(existingChapter.title)) == keccak256(bytes(_chapters[i].title))) {
+                    // 找到匹配的章节，检查是否需要更新
+                    chapterId = existingChapterIds[j];
+                    
+                    // 检查章节内容是否有变化
+                    bool needUpdate = false;
+                    if (
+                        keccak256(bytes(existingChapter.description)) != keccak256(bytes(_chapters[i].description)) ||
+                        existingChapter.orderIndex != _chapters[i].orderIndex ||
+                        existingChapter.isVirtual != _chapters[i].isVirtual
+                    ) {
+                        needUpdate = true;
+                    }
+                    
+                    // 如果需要更新，则更新章节信息
+                    if (needUpdate) {
+                        existingChapter.description = _chapters[i].description;
+                        existingChapter.orderIndex = _chapters[i].orderIndex;
+                        existingChapter.isVirtual = _chapters[i].isVirtual;
+                        existingChapter.updatedAt = block.timestamp;
+                        
+                        emit ChapterUpdated(chapterId, msg.sender);
+                    }
+                    
+                    processedChapters[j] = true;
+                    chapterFound = true;
+                    break;
+                }
+            }
+            
+            // 如果没有找到匹配的章节，创建新章节
+            if (!chapterFound) {
+                chapterId = createChapter(
+                    _courseId,
+                    _chapters[i].title,
+                    _chapters[i].description,
+                    _chapters[i].orderIndex,
+                    _chapters[i].isVirtual
+                );
+                
+                // 添加验证，确保章节创建成功
+                require(chapterExists(chapterId), "Failed to create chapter");
+            }
+            
+            newChapterIds[i] = chapterId;
+            
+            // 处理章节下的课时
+            uint256[] memory chapterLessonResult = processChapterLessons(
+                _courseId,
+                chapterId,
+                _chapters[i].lessons
+            );
+            
+            // 将章节下的课时ID添加到结果数组
+            for (uint256 j = 0; j < chapterLessonResult.length; j++) {
+                newLessonIds[lessonIndex] = chapterLessonResult[j];
+                lessonIndex++;
+            }
+        }
+        
+        // 处理未使用的章节
+        handleUnusedChapters(existingChapterIds, processedChapters);
+        
+        return (newChapterIds, newLessonIds);
     }
     
-    // ==================== 学习记录管理 ====================
-    
-    // ==================== 扩展功能 ====================
-    
-    // 更新功能特性开关
-    function updateFeatureFlags(uint256 _lessonId, uint256 _featureFlags) public {
-        require(lessonExists(_lessonId), "Lesson does not exist");
-        Lesson storage lesson = lessons[_lessonId];
+    // 处理章节下的课时
+    function processChapterLessons(
+        uint256 _courseId,
+        uint256 _chapterId,
+        LessonInput[] memory _lessons
+    ) private returns (uint256[] memory) {
+        // 获取章节下现有的课时
+        uint256[] memory existingLessonIds = chapterLessonIds[_chapterId];
+        bool[] memory processedLessons = new bool[](existingLessonIds.length);
         
-        // 只有课程教师或课时创建者可以更新功能特性开关
-        require(
-            courseContract.isTeacherOfCourse(lesson.linkedCourseId, msg.sender) || 
-            msg.sender == lesson.creator,
-            "Only teacher or creator can update feature flags"
-        );
-        require(!courseContract.isCourseLocked(lesson.linkedCourseId), "Course is locked");
+        uint256[] memory newLessonIds = new uint256[](_lessons.length);
         
-        lesson.featureFlags = _featureFlags;
-        lesson.updatedAt = block.timestamp;
+        // 处理章节下的课时
+        for (uint256 i = 0; i < _lessons.length; i++) {
+            uint256 lessonId = 0;
+            bool lessonFound = false;
+            
+            // 尝试查找匹配的现有课时
+            for (uint256 j = 0; j < existingLessonIds.length; j++) {
+                if (processedLessons[j]) continue;
+                
+                Lesson storage existingLesson = lessons[existingLessonIds[j]];
+                if (keccak256(bytes(existingLesson.title)) == keccak256(bytes(_lessons[i].title))) {
+                    // 找到匹配的课时，检查是否需要更新
+                    lessonId = existingLessonIds[j];
+                    
+                    // 检查课时内容是否有变化
+                    bool needInfoUpdate = isLessonInfoChanged(existingLesson, _lessons[i]);
+                    bool needResourceUpdate = isResourceChanged(existingLesson.resourcePack, _lessons[i].resourcePack);
+                    
+                    // 如果需要更新，则更新课时信息
+                    if (needInfoUpdate) {
+                        updateLessonInfo(existingLesson, _lessons[i]);
+                        emit LessonInfoUpdated(lessonId, msg.sender);
+                    }
+                    
+                    // 如果需要更新资源包，则更新资源包
+                    if (needResourceUpdate) {
+                        existingLesson.resourcePack = _lessons[i].resourcePack;
+                        existingLesson.resourceNonce += 1;
+                        existingLesson.updatedAt = block.timestamp;
+                        
+                        emit LessonResourceUpdated(lessonId, msg.sender, existingLesson.resourceNonce);
+                    }
+                    
+                    processedLessons[j] = true;
+                    lessonFound = true;
+                    break;
+                }
+            }
+            
+            // 如果没有找到匹配的课时，创建新课时
+            if (!lessonFound) {
+                lessonId = createLesson(
+                    _courseId,
+                    _chapterId,
+                    _lessons[i].title,
+                    _lessons[i].description,
+                    _lessons[i].lessonType,
+                    _lessons[i].duration,
+                    _lessons[i].complexity,
+                    _lessons[i].resourcePack,
+                    _lessons[i].contentHash
+                );
+            }
+            
+            newLessonIds[i] = lessonId;
+        }
         
-        emit FeatureFlagsUpdated(_lessonId, _featureFlags);
+        // 处理未使用的课时
+        handleUnusedLessons(existingLessonIds, processedLessons);
+        
+        return newLessonIds;
     }
     
-    // 更新扩展存储槽
-    function updateExtensionSlot(uint256 _lessonId, bytes32 _extensionSlot) public {
-        require(lessonExists(_lessonId), "Lesson does not exist");
-        Lesson storage lesson = lessons[_lessonId];
-        
-        // 只有课程教师或课时创建者可以更新扩展存储槽
-        require(
-            courseContract.isTeacherOfCourse(lesson.linkedCourseId, msg.sender) || 
-            msg.sender == lesson.creator,
-            "Only teacher or creator can update extension slot"
-        );
-        require(!courseContract.isCourseLocked(lesson.linkedCourseId), "Course is locked");
-        
-        lesson.extensionSlot = _extensionSlot;
-        lesson.updatedAt = block.timestamp;
-        
-        emit ExtensionSlotUpdated(_lessonId, _extensionSlot);
+    // 处理未使用的章节
+    function handleUnusedChapters(uint256[] memory _chapterIds, bool[] memory _processed) private {
+        for (uint256 i = 0; i < _chapterIds.length; i++) {
+            if (!_processed[i]) {
+                // 将章节设置为非活跃
+                chapters[_chapterIds[i]].isActive = false;
+                emit ChapterDeleted(_chapterIds[i], msg.sender);
+                
+                // 将该章节下的所有课时状态设置为已归档
+                uint256[] memory chapterLessons = chapterLessonIds[_chapterIds[i]];
+                for (uint256 j = 0; j < chapterLessons.length; j++) {
+                    lessons[chapterLessons[j]].status = LessonStatus.Archived;
+                    emit LessonStatusUpdated(chapterLessons[j], uint8(LessonStatus.Archived));
+                }
+            }
+        }
     }
     
-    // ==================== 查询功能 ====================
+    // 处理未使用的课时
+    function handleUnusedLessons(uint256[] memory _lessonIds, bool[] memory _processed) private {
+        for (uint256 i = 0; i < _lessonIds.length; i++) {
+            if (!_processed[i]) {
+                // 将课时状态设置为已归档
+                lessons[_lessonIds[i]].status = LessonStatus.Archived;
+                emit LessonStatusUpdated(_lessonIds[i], uint8(LessonStatus.Archived));
+            }
+        }
+    }
     
-    // 获取课时基本信息
-    function getLessonInfo(uint256 _lessonId) public view returns (
-        string memory title,
-        string memory description,
-        uint256 linkedCourseId,
-        address creator,
-        uint256 createdAt,
-        uint256 updatedAt,
-        uint8 lessonType,
-        uint8 status,
-        uint32 duration,
-        uint8 complexity
-    ) {
-        require(lessonExists(_lessonId), "Lesson does not exist");
-        Lesson storage lesson = lessons[_lessonId];
-        
+    // 检查课时信息是否有变化
+    function isLessonInfoChanged(Lesson storage _existingLesson, LessonInput memory _newLesson) private view returns (bool) {
         return (
-            lesson.title,
-            lesson.description,
-            lesson.linkedCourseId,
-            lesson.creator,
-            lesson.createdAt,
-            lesson.updatedAt,
-            uint8(lesson.ltype),
-            uint8(lesson.status),
-            lesson.duration,
-            lesson.complexity
+            keccak256(bytes(_existingLesson.description)) != keccak256(bytes(_newLesson.description)) ||
+            _existingLesson.ltype != _newLesson.lessonType ||
+            _existingLesson.duration != _newLesson.duration ||
+            _existingLesson.complexity != _newLesson.complexity ||
+            _existingLesson.contentHash != _newLesson.contentHash
         );
     }
     
-    // 获取课时资源信息
-    function getLessonResource(uint256 _lessonId) public view returns (
-        string memory mainURI,
-        string memory backupURI,
-        bytes32 ipfsCID,
-        uint256 resourceNonce
-    ) {
-        require(lessonExists(_lessonId), "Lesson does not exist");
-        Lesson storage lesson = lessons[_lessonId];
-        
+    // 检查资源包是否有变化
+    function isResourceChanged(ResourcePack storage _existingResource, ResourcePack memory _newResource) private view returns (bool) {
         return (
-            lesson.resourcePack.mainURI,
-            lesson.resourcePack.backupURI,
-            lesson.resourcePack.ipfsCID,
-            lesson.resourceNonce
+            keccak256(bytes(_existingResource.mainURI)) != keccak256(bytes(_newResource.mainURI)) ||
+            keccak256(bytes(_existingResource.backupURI)) != keccak256(bytes(_newResource.backupURI)) ||
+            _existingResource.ipfsCID != _newResource.ipfsCID
         );
     }
     
-    // 获取课程的所有课时
-    function getCourseLessons(uint256 _courseId) public view returns (uint256[] memory) {
-        require(courseContract.courseExists(_courseId), "Course does not exist");
-        
-        return courseLessonIds[_courseId];
+    // 更新课时信息
+    function updateLessonInfo(Lesson storage _lesson, LessonInput memory _input) private {
+        _lesson.description = _input.description;
+        _lesson.ltype = _input.lessonType;
+        _lesson.duration = _input.duration;
+        _lesson.complexity = _input.complexity;
+        _lesson.contentHash = _input.contentHash;
+        _lesson.updatedAt = block.timestamp;
     }
     
+    // 检查章节是否存在
+    function chapterExists(uint256 _chapterId) public view returns (bool) {
+        return _chapterId > 0 && _chapterId <= _chapterIdCounter.current() && chapters[_chapterId].createdAt > 0;
+    }
+    
+    // 获取课程的完整章节和课时详细信息
+    function getCourseLessonDetails(uint256 _courseId) public view returns (
+        // 章节信息数组
+        Chapter[] memory chapterList,  // 修改变量名，避免与全局变量冲突
+        // 每个章节下的课时详细信息
+        Lesson[][] memory chapterLessons
+    ) {
+        require(courseContract.courseExists(_courseId), "Course not exist");
+        
+        // 获取课程下的所有章节ID
+        uint256[] memory chapterIds = courseChapterIds[_courseId];
+        uint256 activeChapterCount = 0;
+        
+        // 计算活跃章节数量
+        for (uint256 i = 0; i < chapterIds.length; i++) {
+            if (chapters[chapterIds[i]].isActive) {
+                activeChapterCount++;
+            }
+        }
+        
+        // 初始化返回数组
+        chapterList = new Chapter[](activeChapterCount);  // 使用修改后的变量名
+        chapterLessons = new Lesson[][](activeChapterCount);
+        
+        // 填充章节信息和章节下的课时详细信息
+        uint256 chapterIndex = 0;
+        for (uint256 i = 0; i < chapterIds.length; i++) {
+            if (chapters[chapterIds[i]].isActive) {
+                chapterList[chapterIndex] = chapters[chapterIds[i]];  // 使用修改后的变量名
+                
+                // 获取章节下的课时ID
+                uint256[] memory lessonIds = chapterLessonIds[chapterIds[i]];
+                uint256 activeLessonCount = 0;
+                
+                // 计算活跃课时数量
+                for (uint256 j = 0; j < lessonIds.length; j++) {
+                    if (lessons[lessonIds[j]].status != LessonStatus.Archived) {
+                        activeLessonCount++;
+                    }
+                }
+                
+                chapterLessons[chapterIndex] = new Lesson[](activeLessonCount);
+                
+                // 填充课时详细信息（只包含非归档状态的课时）
+                uint256 activeLessonIndex = 0;
+                for (uint256 j = 0; j < lessonIds.length; j++) {
+                    if (lessons[lessonIds[j]].status != LessonStatus.Archived) {
+                        chapterLessons[chapterIndex][activeLessonIndex] = lessons[lessonIds[j]];
+                        activeLessonIndex++;
+                    }
+                }
+                
+                chapterIndex++;
+            }
+        }
+        
+        return (chapterList, chapterLessons);  // 使用修改后的变量名
+    }
+
     // 获取编辑者权限
     function getEditorPermissions(uint256 _lessonId, address _editor) public view returns (uint256) {
         return approvedEditors[_lessonId][_editor];
@@ -409,15 +579,12 @@ contract CourseLessonV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     // 必需的函数，用于控制合约升级权限
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
     
-    // ==================== 事件 ====================
     
-    // 在事件列表中移除：
+    event ChapterCreated(uint256 indexed chapterId, uint256 indexed courseId, address indexed creator, string title);
+    event ChapterUpdated(uint256 indexed chapterId, address indexed updater);
+    event ChapterDeleted(uint256 indexed chapterId, address indexed deleter);
     event LessonCreated(uint256 indexed lessonId, uint256 indexed courseId, address indexed creator, string title);
     event LessonInfoUpdated(uint256 indexed lessonId, address indexed updater);
     event LessonResourceUpdated(uint256 indexed lessonId, address indexed updater, uint256 resourceNonce);
     event LessonStatusUpdated(uint256 indexed lessonId, uint8 status);
-    event EditorApproved(uint256 indexed lessonId, address indexed editor, uint256 permissions);
-    event EditorRevoked(uint256 indexed lessonId, address indexed editor);
-    event FeatureFlagsUpdated(uint256 indexed lessonId, uint256 featureFlags);
-    event ExtensionSlotUpdated(uint256 indexed lessonId, bytes32 extensionSlot);
 }

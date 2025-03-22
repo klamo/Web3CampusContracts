@@ -20,8 +20,8 @@
       },
       {
         "name": "_permissions",
-        "type": "uint32",
-        "internalType": "uint32"
+        "type": "uint256",
+        "internalType": "uint256"
       }
     ],
     "outputs": [],
@@ -188,13 +188,13 @@
       },
       {
         "name": "oldPerms",
-        "type": "uint32[]",
-        "internalType": "uint32[]"
+        "type": "uint256[]",
+        "internalType": "uint256[]"
       },
       {
         "name": "newPerms",
-        "type": "uint32[]",
-        "internalType": "uint32[]"
+        "type": "uint256[]",
+        "internalType": "uint256[]"
       }
     ],
     "stateMutability": "view"
@@ -217,8 +217,8 @@
     "outputs": [
       {
         "name": "",
-        "type": "uint32",
-        "internalType": "uint32"
+        "type": "uint256",
+        "internalType": "uint256"
       }
     ],
     "stateMutability": "view"
@@ -350,8 +350,8 @@
       },
       {
         "name": "_permissions",
-        "type": "uint32",
-        "internalType": "uint32"
+        "type": "uint256",
+        "internalType": "uint256"
       }
     ],
     "outputs": [],
@@ -587,9 +587,9 @@
       },
       {
         "name": "permissions",
-        "type": "uint32",
+        "type": "uint256",
         "indexed": false,
-        "internalType": "uint32"
+        "internalType": "uint256"
       }
     ],
     "anonymous": false
@@ -687,5 +687,21 @@
       }
     ],
     "anonymous": false
+  },
+  {
+    "type": "error",
+    "name": "StringsInsufficientHexLength",
+    "inputs": [
+      {
+        "name": "value",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "length",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ]
   }
 ]

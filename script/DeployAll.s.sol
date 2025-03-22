@@ -7,6 +7,7 @@ import "forge-std/console.sol";
 // 导入所有需要部署的合约
 import "web3common/contracts/CommonUserV3.sol";
 import "../src/web3campus/contracts/SchoolV1.sol";
+import "../src/web3campus/contracts/SchoolCustomFieldV1.sol";
 import "../src/web3campus/contracts/SchoolUserV1.sol";
 import "../src/web3campus/contracts/SchoolTeacher.sol";
 import "../src/web3campus/contracts/SchoolFundsV1.sol";
@@ -22,6 +23,7 @@ import "../src/web3campus/contracts/CollegeDAOV1.sol";
 // 导入代理合约
 import "web3common/contracts/CommonUserProxy.sol";
 import "../src/web3campus/contracts/SchoolProxy.sol";
+import "../src/web3campus/contracts/SchoolCustomFieldProxy.sol";
 import "../src/web3campus/contracts/SchoolUserProxy.sol";
 import "../src/web3campus/contracts/SchoolTeacherProxy.sol";
 import "../src/web3campus/contracts/SchoolFundsProxy.sol";
@@ -248,9 +250,30 @@ contract DeployAll is Script {
             address(collegeDAOImplementation),
             collegeDAOInitData
         );
-        
+
         console.log(unicode"38、CollegeDAOV1 实现合约部署成功:", address(collegeDAOImplementation));
         console.log(unicode"39、CollegeDAOV1 代理合约部署成功:", address(collegeDAOProxy));
+
+
+        // 14. 部署 SchoolCustomFieldV1 及其代理
+        console.log(unicode"40、开始部署 SchoolCustomFieldV1...");
+        SchoolCustomFieldV1 schoolCustomFieldImplementation = new SchoolCustomFieldV1();
+        
+        bytes memory schoolCustomFieldInitData = abi.encodeWithSelector(
+            SchoolCustomFieldV1.initialize.selector
+        );
+        
+        SchoolCustomFieldProxy schoolCustomFieldProxy = new SchoolCustomFieldProxy(
+            address(schoolCustomFieldImplementation),
+            schoolCustomFieldInitData
+        );
+        
+        console.log(unicode"41、SchoolCustomFieldV1 实现合约部署成功:", address(schoolCustomFieldImplementation));
+        console.log(unicode"42、SchoolCustomFieldV1 代理合约部署成功:", address(schoolCustomFieldProxy));
+
+
+        
+
 
         // 设置 SchoolUser 的 CommonUser 地址
         SchoolUserV1(address(schoolUserProxy)).setCommonUser(address(commonUserProxy));
@@ -269,6 +292,8 @@ contract DeployAll is Script {
         console.log(unicode"43、SchoolV1 设置 setSchoolUser 地址成功");
         SchoolV1(address(schoolProxy)).setSchoolTeacher(address(schoolTeacherProxy));
         console.log(unicode"44、SchoolV1 设置 setSchoolTeacher 地址成功");
+        SchoolV1(address(schoolProxy)).setCustomField(address(schoolCustomFieldProxy));
+        console.log(unicode"45、SchoolV1 设置 setCustomField 地址成功");
 
         // 设置 SchoolFunds 的外部合约地址
         SchoolFundsV1(address(schoolFundsProxy)).setSchool(address(schoolProxy));
@@ -314,6 +339,13 @@ contract DeployAll is Script {
         CollegeDAOV1(address(collegeDAOProxy)).setCollege(address(collegeProxy));
         console.log(unicode"57、CollegeDAOV1 设置 setCollege 地址成功");
 
+
+        // 设置 SchoolCustomField 的外部合约地址
+        SchoolCustomFieldV1(address(schoolCustomFieldProxy)).setSchool(address(schoolProxy));
+        console.log(unicode"46、SchoolCustomFieldV1 设置 setSchool 地址成功");
+
+
+
         vm.stopBroadcast();
 
         // 输出所有部署的合约地址汇总
@@ -344,5 +376,7 @@ contract DeployAll is Script {
         console.log(unicode"82、CollegeV1 代理合约:", address(collegeProxy));
         console.log(unicode"83、CollegeDAOV1 实现合约:", address(collegeDAOImplementation));
         console.log(unicode"84、CollegeDAOV1 代理合约:", address(collegeDAOProxy));
+        console.log(unicode"85、SchoolCustomFieldV1 实现合约:", address(schoolCustomFieldImplementation));
+        console.log(unicode"86、SchoolCustomFieldV1 代理合约:", address(schoolCustomFieldProxy));
     }
 }

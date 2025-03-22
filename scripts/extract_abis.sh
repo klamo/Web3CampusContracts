@@ -22,6 +22,7 @@ contracts=(
     "CourseChapterV1"
     "CollegeV1"
     "CollegeDAOV1"
+    "SchoolCustomFieldV1"
 )
 
 for contract in "${contracts[@]}"

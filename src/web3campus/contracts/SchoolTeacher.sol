@@ -19,14 +19,14 @@ contract SchoolTeacher is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     struct PermissionLog {
         uint256 timestamp;
         address operator;
-        uint32 oldPerms;
-        uint32 newPerms;
+        uint256 oldPerms;  // 从 uint32 改为 uint256
+        uint256 newPerms;  // 从 uint32 改为 uint256
     }
     
     // 教师信息结构
     struct TeacherInfo {
         address[] teacherIds;
-        mapping(address => uint32) userPermissions;
+        mapping(address => uint256) userPermissions;  // 从 uint32 改为 uint256
         mapping(address => PermissionLog[]) permissionLogs;
     }
     
@@ -85,10 +85,23 @@ contract SchoolTeacher is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     }
     
     // 修改所有函数添加 schoolExists 修饰符
-    function addTeacher(uint256 _schoolId, address _teacher, uint32 _permissions) 
+    function addTeacher(uint256 _schoolId, address _teacher, uint256 _permissions)  // 参数类型从 uint32 改为 uint256
         public 
         schoolExists(_schoolId) 
     {
+        // 获取学校创建者
+        (,,,address schoolCreator,,,, ) = school.getSchoolInfo(_schoolId);
+        // 增加一个特殊情况：如果是学校刚创建，允许创建者添加教师
+        school.schoolExists(_schoolId);
+        // 检查权限：只有合约拥有者、学校创建者或有管理教师权限的用户可以添加教师
+        require(
+            msg.sender == owner() || 
+            msg.sender == schoolCreator ||
+            msg.sender == address(school) ||
+            school.hasPermission(_schoolId, msg.sender, 0x8), 
+            "No permission to add teacher. "
+        );
+        
         require(schoolUser.isRegistered(_teacher), "Teacher not registered");
         
         TeacherInfo storage info = teacherInfos[_schoolId];
@@ -109,14 +122,12 @@ contract SchoolTeacher is Initializable, OwnableUpgradeable, UUPSUpgradeable {
             // 如果用户之前不是教师，更新 SchoolUserV1 中的 isTeacherTime
             if (schoolUser.getTeacherTime(_teacher) == 0) {
                 // 调用 SchoolUserV1 合约的 setAsTeacher 方法
-                // 注意：这里假设 SchoolTeacher 合约有权限调用 setAsTeacher
-                // 如果没有权限，需要修改 SchoolUserV1 合约的权限设置
                 schoolUser.setAsTeacher(_teacher);
             }
         }
         
         // 更新权限
-        uint32 oldPerms = info.userPermissions[_teacher];
+        uint256 oldPerms = info.userPermissions[_teacher];
         info.userPermissions[_teacher] = _permissions;
         
         // 记录权限日志
@@ -154,7 +165,7 @@ contract SchoolTeacher is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         }
         
         // 记录权限日志
-        uint32 oldPerms = info.userPermissions[_teacher];
+        uint256 oldPerms = info.userPermissions[_teacher];
         PermissionLog memory log = PermissionLog({
             timestamp: block.timestamp,
             operator: msg.sender,
@@ -175,7 +186,7 @@ contract SchoolTeacher is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     }
     
     // 获取教师权限
-    function getTeacherPermissions(uint256 _schoolId, address _teacher) public view returns (uint32) {
+    function getTeacherPermissions(uint256 _schoolId, address _teacher) public view returns (uint256) {  // 返回类型从 uint32 改为 uint256
         return teacherInfos[_schoolId].userPermissions[_teacher];
     }
     
@@ -183,16 +194,16 @@ contract SchoolTeacher is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     function getTeacherPermissionLogs(uint256 _schoolId, address _teacher) public view returns (
         uint256[] memory timestamps,
         address[] memory operators,
-        uint32[] memory oldPerms,
-        uint32[] memory newPerms
+        uint256[] memory oldPerms,  // 从 uint32[] 改为 uint256[]
+        uint256[] memory newPerms   // 从 uint32[] 改为 uint256[]
     ) {
         PermissionLog[] storage logs = teacherInfos[_schoolId].permissionLogs[_teacher];
         uint256 logsCount = logs.length;
         
         timestamps = new uint256[](logsCount);
         operators = new address[](logsCount);
-        oldPerms = new uint32[](logsCount);
-        newPerms = new uint32[](logsCount);
+        oldPerms = new uint256[](logsCount);
+        newPerms = new uint256[](logsCount);
         
         for (uint i = 0; i < logsCount; i++) {
             timestamps[i] = logs[i].timestamp;
@@ -213,7 +224,7 @@ contract SchoolTeacher is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
     // 事件
-    event TeacherAdded(uint256 indexed schoolId, address indexed teacher, uint32 permissions);
+    event TeacherAdded(uint256 indexed schoolId, address indexed teacher, uint256 permissions);  // 从 uint32 改为 uint256
     event TeacherRemoved(uint256 indexed schoolId, address indexed teacher);
     
     // 教师申请状态枚举
@@ -340,7 +351,7 @@ contract SchoolTeacher is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         uint256 _applicationIndex, 
         bool _approved, 
         string memory _comment,
-        uint32 _permissions
+        uint256 _permissions  // 从 uint32 改为 uint256
     ) 
         public 
         schoolExists(_schoolId) 

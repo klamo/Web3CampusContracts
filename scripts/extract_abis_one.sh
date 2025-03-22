@@ -9,7 +9,8 @@ mkdir -p src/abi
 
 # 提取所有需要的合约 ABI
 contracts=(
-    "CourseV1"
+    "CourseLessonManagerV1",
+    "CourseLessonV1"
 )
 
 for contract in "${contracts[@]}"

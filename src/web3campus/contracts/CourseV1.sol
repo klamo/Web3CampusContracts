@@ -74,10 +74,10 @@ contract CourseV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         CourseStatus courseStatus;  // 课程状态
         CourseType ctype;           // 课程类型
         uint256 collegeId;          // 所属学院ID (0=独立课程)
+        uint256 schoolId;           // 所属学校ID
         uint256 reputation;         // 动态声誉值
         
         // 教学配置
-        // address[] _teacherAddrs;    // 教师地址集合 - 已移除，由CourseTeacherV1管理
         AIAssistantConfig assistantConfig; // AI助教配置
         
         // 价格模型
@@ -105,10 +105,12 @@ contract CourseV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     
     // 课程基本信息结构体（用于返回值）
     struct CourseInfoView {
+        uint256 courseId;      // 课程ID字段
         string name;
         string description;
         string coverImage;
         uint256 collegeId;
+        uint256 schoolId;      // 添加学校ID字段
         address creator;
         address manager;
         uint256 createdAt;
@@ -191,6 +193,7 @@ contract CourseV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         newCourse.courseStatus = CourseStatus.NotStarted;
         newCourse.ctype = _courseType;
         newCourse.collegeId = _collegeId;
+        newCourse.schoolId = _schoolId;    // 设置学校ID
         newCourse.reputation = 0;
         
         // 设置AI助教默认配置
@@ -369,10 +372,12 @@ contract CourseV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         require(courseExists(_courseId), "Course does not exist");
         Course storage course = courses[_courseId];
         return CourseInfoView({
+            courseId: _courseId,
             name: course.name,
             description: course.description,
             coverImage: course.coverImage,
             collegeId: course.collegeId,
+            schoolId: course.schoolId,    // 返回学校ID
             creator: course.creator,
             manager: course.manager,
             createdAt: course.createdAt,
@@ -424,7 +429,7 @@ contract CourseV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         string memory name,     // 课程名称（可选）
         address manager,        // 课程管理者（可选）
         address creator,        // 课程创建者（可选）
-        uint8 courseStatus,     // 课程状态（可选）
+        uint8 courseStatus,     // 课程状态（可选，255表示不过滤）
         uint8 sort,             // 排序规则（预留）
         uint256 pageSize,       // 每页数量
         uint256 pageNumber      // 页码（从0开始）
@@ -468,7 +473,8 @@ contract CourseV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
                              _containsSubstring(course.name, name);
             bool managerMatch = manager == address(0) || course.manager == manager;
             bool creatorMatch = creator == address(0) || course.creator == creator;
-            bool statusMatch = courseStatus == 0 || uint8(course.courseStatus) == courseStatus;
+            // 修改过滤条件
+            bool statusMatch = courseStatus == type(uint8).max || uint8(course.courseStatus) == courseStatus;
             
             if (nameMatch && managerMatch && creatorMatch && statusMatch) {
                 matchedIndices[matchCount] = i;
@@ -500,17 +506,20 @@ contract CourseV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         uint256 resultSize = endIndex > startIndex ? endIndex - startIndex : 0;
         CourseInfoView[] memory result = new CourseInfoView[](resultSize);
         
+        // 在 queryCourses 函数中修改结果填充部分
         // 填充结果数组
         for (uint256 i = 0; i < resultSize; i++) {
             uint256 originalIndex = matchedIndices[startIndex + i];
-            uint256 courseId = initialCourseIds[originalIndex];
+            uint256 _courseId = initialCourseIds[originalIndex];
             
-            Course storage course = courses[courseId];
+            Course storage course = courses[_courseId];
             result[i] = CourseInfoView({
+                courseId: _courseId,     // 添加课程ID
                 name: course.name,
                 description: course.description,
                 coverImage: course.coverImage,
                 collegeId: course.collegeId,
+                schoolId: course.schoolId,    // 添加学校ID
                 creator: course.creator,
                 manager: course.manager,
                 createdAt: course.createdAt,
