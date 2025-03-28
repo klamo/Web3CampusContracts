@@ -1,6 +1,18 @@
-# Compiler files
+# Dependencies
+node_modules/
 cache/
+lib/
+
+# Foundry
 out/
+
+# IDE
+.vscode/
+.idea/
+
+# Misc
+.DS_Store
+*.log
 
 # Ignores development broadcast logs
 !/broadcast
