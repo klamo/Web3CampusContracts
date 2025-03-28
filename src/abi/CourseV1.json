@@ -114,121 +114,6 @@
   },
   {
     "type": "function",
-    "name": "getCourseAIAssistant",
-    "inputs": [
-      {
-        "name": "_courseId",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "configHash",
-        "type": "bytes32",
-        "internalType": "bytes32"
-      },
-      {
-        "name": "validator",
-        "type": "address",
-        "internalType": "address"
-      },
-      {
-        "name": "updateNonce",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "getCourseInfo",
-    "inputs": [
-      {
-        "name": "_courseId",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "",
-        "type": "tuple",
-        "internalType": "struct CourseV1.CourseInfoView",
-        "components": [
-          {
-            "name": "courseId",
-            "type": "uint256",
-            "internalType": "uint256"
-          },
-          {
-            "name": "name",
-            "type": "string",
-            "internalType": "string"
-          },
-          {
-            "name": "description",
-            "type": "string",
-            "internalType": "string"
-          },
-          {
-            "name": "coverImage",
-            "type": "string",
-            "internalType": "string"
-          },
-          {
-            "name": "collegeId",
-            "type": "uint256",
-            "internalType": "uint256"
-          },
-          {
-            "name": "schoolId",
-            "type": "uint256",
-            "internalType": "uint256"
-          },
-          {
-            "name": "creator",
-            "type": "address",
-            "internalType": "address"
-          },
-          {
-            "name": "manager",
-            "type": "address",
-            "internalType": "address"
-          },
-          {
-            "name": "createdAt",
-            "type": "uint256",
-            "internalType": "uint256"
-          },
-          {
-            "name": "updatedAt",
-            "type": "uint256",
-            "internalType": "uint256"
-          },
-          {
-            "name": "courseStatus",
-            "type": "uint8",
-            "internalType": "uint8"
-          },
-          {
-            "name": "courseType",
-            "type": "uint8",
-            "internalType": "uint8"
-          },
-          {
-            "name": "reputation",
-            "type": "uint256",
-            "internalType": "uint256"
-          }
-        ]
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
     "name": "getCourseManager",
     "inputs": [
       {
@@ -404,6 +289,11 @@
         "name": "pageNumber",
         "type": "uint256",
         "internalType": "uint256"
+      },
+      {
+        "name": "courseIds",
+        "type": "uint256[]",
+        "internalType": "uint256[]"
       }
     ],
     "outputs": [
@@ -476,6 +366,56 @@
             "name": "reputation",
             "type": "uint256",
             "internalType": "uint256"
+          },
+          {
+            "name": "priceModel",
+            "type": "uint8",
+            "internalType": "uint8"
+          },
+          {
+            "name": "basePrice",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "discountRate",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "paymentToken",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "aiConfigHash",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "aiValidator",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "aiUpdateNonce",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "contentHash",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "version",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "emergencyLock",
+            "type": "bool",
+            "internalType": "bool"
           }
         ]
       },

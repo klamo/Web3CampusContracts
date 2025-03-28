@@ -19,7 +19,7 @@ contract CourseV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     
     // 课程ID计数器
     CountersUpgradeable.Counter private _courseIdCounter;
-    
+
     // 课程状态枚举
     enum CourseStatus {
         NotStarted,  // 未开始
@@ -118,6 +118,22 @@ contract CourseV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         uint8 courseStatus;
         uint8 courseType;
         uint256 reputation;
+        
+        // 添加Pricing结构体的字段
+        uint8 priceModel;         // 价格模型
+        uint256 basePrice;        // 基础价格(wei)
+        uint256 discountRate;     // 声誉折扣率(百分比)
+        address paymentToken;     // 支付代币地址
+        
+        // 添加AIAssistantConfig结构体的字段
+        bytes32 aiConfigHash;     // AI配置哈希
+        address aiValidator;      // API验证合约
+        uint256 aiUpdateNonce;    // 更新计数器
+        
+        // 添加其他Course结构体中的字段
+        bytes32 contentHash;      // 课程内容哈希
+        uint256 version;          // 数据版本号
+        bool emergencyLock;       // 紧急锁定开关
     }
     
     // 课程ID => 课程信息
@@ -368,27 +384,37 @@ contract CourseV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     // ==================== 查询功能 ====================
     
     // 获取课程基本信息
-    function getCourseInfo(uint256 _courseId) public view returns (CourseInfoView memory) {
-        require(courseExists(_courseId), "Course does not exist");
-        Course storage course = courses[_courseId];
-        return CourseInfoView({
-            courseId: _courseId,
-            name: course.name,
-            description: course.description,
-            coverImage: course.coverImage,
-            collegeId: course.collegeId,
-            schoolId: course.schoolId,    // 返回学校ID
-            creator: course.creator,
-            manager: course.manager,
-            createdAt: course.createdAt,
-            updatedAt: course.updatedAt,
-            courseStatus: uint8(course.courseStatus),
-            courseType: uint8(course.ctype),
-            reputation: course.reputation
-        });
-    }
+    // function getCourseInfo(uint256 _courseId) public view returns (CourseInfoView memory) {
+    //     require(courseExists(_courseId), "Course does not exist");
+    //     Course storage course = courses[_courseId];
+    //     return CourseInfoView({
+    //         courseId: _courseId,
+    //         name: course.name,
+    //         description: course.description,
+    //         coverImage: course.coverImage,
+    //         collegeId: course.collegeId,
+    //         schoolId: course.schoolId,    // 返回学校ID
+    //         creator: course.creator,
+    //         manager: course.manager,
+    //         createdAt: course.createdAt,
+    //         updatedAt: course.updatedAt,
+    //         courseStatus: uint8(course.courseStatus),
+    //         courseType: uint8(course.ctype),
+    //         reputation: course.reputation,
+    //         priceModel: uint8(course.pricing.model),
+    //         basePrice: course.pricing.basePrice,
+    //         discountRate: course.pricing.discountRate,
+    //         paymentToken: course.pricing.paymentToken,
+    //         aiConfigHash: course.assistantConfig.configHash,
+    //         aiValidator: course.assistantConfig.validator,
+    //         aiUpdateNonce: course.assistantConfig.updateNonce,
+    //         contentHash: course.contentHash,
+    //         version: course.version,
+    //         emergencyLock: course._emergencyLock
+    //     });
+    // }
     
-    // 获取课程价格信息
+    //获取课程价格信息
     function getCoursePricing(uint256 _courseId) public view returns (
         uint8 model,
         uint256 basePrice,
@@ -407,20 +433,20 @@ contract CourseV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     }
     
     // 获取课程AI助教配置
-    function getCourseAIAssistant(uint256 _courseId) public view returns (
-        bytes32 configHash,
-        address validator,
-        uint256 updateNonce
-    ) {
-        require(courseExists(_courseId), "Course does not exist");
-        AIAssistantConfig storage config = courses[_courseId].assistantConfig;
+    // function getCourseAIAssistant(uint256 _courseId) public view returns (
+    //     bytes32 configHash,
+    //     address validator,
+    //     uint256 updateNonce
+    // ) {
+    //     require(courseExists(_courseId), "Course does not exist");
+    //     AIAssistantConfig storage config = courses[_courseId].assistantConfig;
         
-        return (
-            config.configHash,
-            config.validator,
-            config.updateNonce
-        );
-    }
+    //     return (
+    //         config.configHash,
+    //         config.validator,
+    //         config.updateNonce
+    //     );
+    // }
     
     // 查询课程列表（通用查询方法）
     function queryCourses(
@@ -432,12 +458,18 @@ contract CourseV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         uint8 courseStatus,     // 课程状态（可选，255表示不过滤）
         uint8 sort,             // 排序规则（预留）
         uint256 pageSize,       // 每页数量
-        uint256 pageNumber      // 页码（从0开始）
+        uint256 pageNumber,     // 页码（从0开始）
+        uint256[] memory courseIds  // 课程ID数组（可选）
     ) public view returns (CourseInfoView[] memory, uint256) {
         // 获取初始课程ID列表
         uint256[] memory initialCourseIds;
         
-        if (sourceId > 0) {
+        // 如果指定了课程ID数组，直接使用它
+        if (courseIds.length > 0) {
+            initialCourseIds = courseIds;
+        }
+        // 否则按原有逻辑获取课程列表
+        else if (sourceId > 0) {
             if (source == 0) {
                 // 从学校获取课程
                 initialCourseIds = schoolCoursesIds[sourceId];
@@ -458,19 +490,25 @@ contract CourseV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
             }
         }
         
+        // 如果初始课程ID列表为空，直接返回空结果
+        if (initialCourseIds.length == 0) {
+            return (new CourseInfoView[](0), 0);
+        }
+        
         // 计算符合条件的课程数量和索引
         uint256[] memory matchedIndices = new uint256[](initialCourseIds.length);
         uint256 matchCount = 0;
         
         for (uint256 i = 0; i < initialCourseIds.length; i++) {
             uint256 courseId = initialCourseIds[i];
-            if (courseId == 0) continue; // 跳过无效ID
+            if (courseId == 0 || !courseExists(courseId)) continue; // 跳过无效ID
             
             Course storage course = courses[courseId];
             
             // 应用过滤条件
             bool nameMatch = bytes(name).length == 0 || 
                              _containsSubstring(course.name, name);
+            // 修改比较逻辑，使用正确的方式判断零地址
             bool managerMatch = manager == address(0) || course.manager == manager;
             bool creatorMatch = creator == address(0) || course.creator == creator;
             // 修改过滤条件
@@ -506,7 +544,6 @@ contract CourseV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         uint256 resultSize = endIndex > startIndex ? endIndex - startIndex : 0;
         CourseInfoView[] memory result = new CourseInfoView[](resultSize);
         
-        // 在 queryCourses 函数中修改结果填充部分
         // 填充结果数组
         for (uint256 i = 0; i < resultSize; i++) {
             uint256 originalIndex = matchedIndices[startIndex + i];
@@ -526,7 +563,17 @@ contract CourseV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
                 updatedAt: course.updatedAt,
                 courseStatus: uint8(course.courseStatus),
                 courseType: uint8(course.ctype),
-                reputation: course.reputation
+                reputation: course.reputation,
+                priceModel: uint8(course.pricing.model),
+                basePrice: course.pricing.basePrice,
+                discountRate: course.pricing.discountRate,
+                paymentToken: course.pricing.paymentToken,
+                aiConfigHash: course.assistantConfig.configHash,
+                aiValidator: course.assistantConfig.validator,
+                aiUpdateNonce: course.assistantConfig.updateNonce,
+                contentHash: course.contentHash,
+                version: course.version,
+                emergencyLock: course._emergencyLock
             });
         }
         // 注意：排序功能预留，目前未实现
@@ -537,11 +584,13 @@ contract CourseV1 is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     
     // 辅助函数：检查字符串是否包含子串（简化版，仅用于演示）
     function _containsSubstring(string memory str, string memory substr) private pure returns (bool) {
+        // 处理空字符串的特殊情况
+        if (bytes(substr).length == 0 || keccak256(bytes(substr)) == keccak256(bytes("0x"))) {
+            return true;
+        }
+        
         bytes memory strBytes = bytes(str);
         bytes memory substrBytes = bytes(substr);
-        
-        // 如果子串长度为0，则认为匹配
-        if (substrBytes.length == 0) return true;
         
         // 如果子串长度大于字符串长度，则不匹配
         if (substrBytes.length > strBytes.length) return false;

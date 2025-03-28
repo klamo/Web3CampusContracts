@@ -21,3 +21,17 @@ cast call 0xa513E6E4b8f2a923D98304ec87F64353C4D5C853 "getSchoolApplications(uint
 // getCourseLessonDetails 获取课程的完整章节和课时详细信息
 cast call 0x9A9f2CCfdE556A7E9Ff0848998Aa4a0CFD8863AE "getCourseLessonDetails"
 
+
+// queryCourses 查询课程列表
+cast call 0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82 \
+  "queryCourses(uint8,uint256,string,address,address,uint8,uint8,uint256,uint256,uint256[])((uint256,string,string,string,uint256,uint256,address,address,uint256,uint256,uint8,uint8,uint256)[],uint256)" \
+  0 \
+  1 \
+  '' \
+  0x0000000000000000000000000000000000000000 \
+  0x0000000000000000000000000000000000000000 \
+  0 \
+  255 \
+  1 \
+  1 \
+  "[]"

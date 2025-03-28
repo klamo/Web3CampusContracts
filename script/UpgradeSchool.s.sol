@@ -21,15 +21,16 @@ contract UpgradeSchool is Script {
 
         // 部署新的实现合约
         //SchoolUserV1 newImplementation = new SchoolUserV1();
-        CourseLessonV1 newImplementation = new CourseLessonV1();
+        //CourseLessonV1 newImplementation = new CourseLessonV1();
         //SchoolTeacher newImplementation = new SchoolTeacher();
+        CourseLessonManagerV1 newImplementation = new CourseLessonManagerV1();
 
         // SchoolUserV1的代理合约
         //UUPSUpgradeable proxy = UUPSUpgradeable(0x5FC8d32690cc91D4c39d9d3abcBD16989F875707);
         // SchoolTeacher的代理合约
         //UUPSUpgradeable proxy = UUPSUpgradeable(0xa513E6E4b8f2a923D98304ec87F64353C4D5C853);
         // CourseV1的代理合约
-        UUPSUpgradeable proxy = UUPSUpgradeable(0x9A9f2CCfdE556A7E9Ff0848998Aa4a0CFD8863AE);
+        UUPSUpgradeable proxy = UUPSUpgradeable(0x3Aa5ebB10DC797CAC828524e59A333d0A371443c);
         proxy.upgradeTo(address(newImplementation));
         vm.stopBroadcast();
         console.log("New implementation deployed to:", address(newImplementation));
